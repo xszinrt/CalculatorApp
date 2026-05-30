@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Signed APK
 
 on: [push]
 
@@ -19,8 +19,19 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
       
-      - name: Upload APK
+      - name: Sign APK (debug key)
+        run: |
+          # إنشاء مفتاح تصحيح تلقائي
+          keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=Debug" -storepass android -keypass android
+          
+          # توقيع APK
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore debug.keystore -storepass android -keypass android app/build/outputs/apk/release/app-release-unsigned.apk androiddebugkey
+          
+          # تحسين وتحضير APK الموقع
+          cp app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/calculator-signed.apk
+      
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: calculator-app
-          path: app/build/outputs/apk/release/*.apk
+          name: calculator-signed
+          path: app/build/outputs/apk/release/calculator-signed.apk
