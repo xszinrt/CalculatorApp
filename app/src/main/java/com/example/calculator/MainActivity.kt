@@ -2,9 +2,13 @@ package com.example.calculator
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import android.os.Build
 
 class MainActivity : AppCompatActivity() {
     
@@ -13,15 +17,22 @@ class MainActivity : AppCompatActivity() {
     private var firstNumber = ""
     private var operation = ""
     private var isNewNumber = true
+    private lateinit var vibrator: Vibrator
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
+        vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
+        
         tvResult = findViewById(R.id.tv_result)
         tvResult.text = "0"
         
-        // أزرار الأرقام
+        // تحميل التأثيرات
+        val pressAnim = AnimationUtils.loadAnimation(this, R.anim.button_press)
+        val releaseAnim = AnimationUtils.loadAnimation(this, R.anim.button_release)
+        
+        // إعداد الأزرار مع التأثيرات
         val numbers = mapOf(
             R.id.btn_0 to "0", R.id.btn_1 to "1", R.id.btn_2 to "2",
             R.id.btn_3 to "3", R.id.btn_4 to "4", R.id.btn_5 to "5",
@@ -29,16 +40,58 @@ class MainActivity : AppCompatActivity() {
         )
         
         numbers.forEach { id, value ->
-            findViewById<Button>(id).setOnClickListener { appendNumber(value) }
+            val button = findViewById<Button>(id)
+            button.setOnTouchListener { view, event ->
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        view.startAnimation(pressAnim)
+                        vibrate(50)
+                    }
+                    android.view.MotionEvent.ACTION_UP -> {
+                        view.startAnimation(releaseAnim)
+                        appendNumber(value)
+                    }
+                }
+                true
+            }
         }
         
-        findViewById<Button>(R.id.btn_plus).setOnClickListener { setOperation("+") }
-        findViewById<Button>(R.id.btn_minus).setOnClickListener { setOperation("-") }
-        findViewById<Button>(R.id.btn_multiply).setOnClickListener { setOperation("×") }
-        findViewById<Button>(R.id.btn_divide).setOnClickListener { setOperation("÷") }
-        findViewById<Button>(R.id.btn_equal).setOnClickListener { calculate() }
-        findViewById<Button>(R.id.btn_clear).setOnClickListener { clear() }
-        findViewById<Button>(R.id.btn_decimal).setOnClickListener { addDecimal() }
+        // أزرار العمليات
+        setupInteractiveButton(R.id.btn_plus) { setOperation("+") }
+        setupInteractiveButton(R.id.btn_minus) { setOperation("-") }
+        setupInteractiveButton(R.id.btn_multiply) { setOperation("×") }
+        setupInteractiveButton(R.id.btn_divide) { setOperation("÷") }
+        setupInteractiveButton(R.id.btn_equal) { calculate() }
+        setupInteractiveButton(R.id.btn_clear) { clear() }
+        setupInteractiveButton(R.id.btn_decimal) { addDecimal() }
+    }
+    
+    private fun setupInteractiveButton(buttonId: Int, action: () -> Unit) {
+        val pressAnim = AnimationUtils.loadAnimation(this, R.anim.button_press)
+        val releaseAnim = AnimationUtils.loadAnimation(this, R.anim.button_release)
+        val button = findViewById<Button>(buttonId)
+        
+        button.setOnTouchListener { view, event ->
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    view.startAnimation(pressAnim)
+                    vibrate(50)
+                }
+                android.view.MotionEvent.ACTION_UP -> {
+                    view.startAnimation(releaseAnim)
+                    action()
+                }
+            }
+            true
+        }
+    }
+    
+    private fun vibrate(duration: Long) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            vibrator.vibrate(duration)
+        }
     }
     
     private fun appendNumber(num: String) {
