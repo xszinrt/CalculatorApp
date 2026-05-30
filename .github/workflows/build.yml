@@ -1,6 +1,9 @@
-name: Build Signed APK
+name: Build Debug APK
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,26 +15,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       
-      - name: Build APK
+      - name: Build Debug APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleDebug
       
-      - name: Sign APK (debug key)
-        run: |
-          # إنشاء مفتاح تصحيح تلقائي
-          keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=Debug" -storepass android -keypass android
-          
-          # توقيع APK
-          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore debug.keystore -storepass android -keypass android app/build/outputs/apk/release/app-release-unsigned.apk androiddebugkey
-          
-          # تحسين وتحضير APK الموقع
-          cp app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/calculator-signed.apk
-      
-      - name: Upload Signed APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: calculator-signed
-          path: app/build/outputs/apk/release/calculator-signed.apk
+          name: calculator-debug
+          path: app/build/outputs/apk/debug/*.apk
