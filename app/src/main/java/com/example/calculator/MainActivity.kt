@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import android.util.Log
 
 class MainActivity : AppCompatActivity() {
     
@@ -17,132 +16,62 @@ class MainActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
         
-        try {
-            setContentView(R.layout.activity_main)
-            
-            tvResult = findViewById(R.id.tv_result)
-            if (tvResult == null) {
-                Log.e("Calculator", "tvResult is null!")
-                return
-            }
-            tvResult.text = "0"
-            
-            // أزرار الأرقام
-            val numbers = mapOf(
-                R.id.btn_0 to "0", R.id.btn_1 to "1", R.id.btn_2 to "2",
-                R.id.btn_3 to "3", R.id.btn_4 to "4", R.id.btn_5 to "5",
-                R.id.btn_6 to "6", R.id.btn_7 to "7", R.id.btn_8 to "8", 
-                R.id.btn_9 to "9"
-            )
-            
-            numbers.forEach { id, value ->
-                val button = findViewById<Button>(id)
-                if (button != null) {
-                    button.setOnClickListener { appendNumber(value) }
-                }
-            }
-            
-            // أزرار العمليات
-            findViewById<Button>(R.id.btn_plus)?.setOnClickListener { setOperation("+") }
-            findViewById<Button>(R.id.btn_minus)?.setOnClickListener { setOperation("-") }
-            findViewById<Button>(R.id.btn_multiply)?.setOnClickListener { setOperation("×") }
-            findViewById<Button>(R.id.btn_divide)?.setOnClickListener { setOperation("÷") }
-            findViewById<Button>(R.id.btn_equal)?.setOnClickListener { calculate() }
-            findViewById<Button>(R.id.btn_clear)?.setOnClickListener { clear() }
-            findViewById<Button>(R.id.btn_decimal)?.setOnClickListener { addDecimal() }
-            
-        } catch (e: Exception) {
-            Log.e("Calculator", "Error in onCreate: ${e.message}")
-            Toast.makeText(this, "خطأ في التشغيل: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-    
-    private fun appendNumber(num: String) {
-        try {
-            if (isNewNumber) {
-                currentNumber = ""
-                isNewNumber = false
-            }
-            currentNumber += num
-            tvResult.text = currentNumber
-        } catch (e: Exception) {
-            Toast.makeText(this, "خطأ: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    private fun setOperation(op: String) {
-        try {
-            if (currentNumber.isNotEmpty()) {
-                firstNumber = currentNumber
-                operation = op
-                isNewNumber = true
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "خطأ: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    private fun calculate() {
-        try {
-            if (firstNumber.isEmpty() || currentNumber.isEmpty() || operation.isEmpty()) {
-                Toast.makeText(this, "أدخل عملية كاملة", Toast.LENGTH_SHORT).show()
-                return
-            }
-            
-            val first = firstNumber.toDoubleOrNull()
-            val second = currentNumber.toDoubleOrNull()
-            
-            if (first == null || second == null) {
-                Toast.makeText(this, "خطأ في الأرقام", Toast.LENGTH_SHORT).show()
-                return
-            }
-            
-            val result = when (operation) {
-                "+" -> first + second
-                "-" -> first - second
-                "×" -> first * second
-                "÷" -> if (second != 0.0) first / second else {
-                    Toast.makeText(this, "لا تقسم على صفر!", Toast.LENGTH_SHORT).show()
-                    return
-                }
-                else -> return
-            }
-            
-            val resultText = if (result == result.toLong().toDouble()) {
-                result.toLong().toString()
-            } else {
-                result.toString()
-            }
-            
-            tvResult.text = resultText
-            currentNumber = resultText
+        tvResult = findViewById(R.id.tv_result)
+        tvResult.text = "0"
+        
+        // أزرار الأرقام
+        findViewById<Button>(R.id.btn_0).setOnClickListener { addNumber("0") }
+        findViewById<Button>(R.id.btn_1).setOnClickListener { addNumber("1") }
+        findViewById<Button>(R.id.btn_2).setOnClickListener { addNumber("2") }
+        findViewById<Button>(R.id.btn_3).setOnClickListener { addNumber("3") }
+        findViewById<Button>(R.id.btn_4).setOnClickListener { addNumber("4") }
+        findViewById<Button>(R.id.btn_5).setOnClickListener { addNumber("5") }
+        findViewById<Button>(R.id.btn_6).setOnClickListener { addNumber("6") }
+        findViewById<Button>(R.id.btn_7).setOnClickListener { addNumber("7") }
+        findViewById<Button>(R.id.btn_8).setOnClickListener { addNumber("8") }
+        findViewById<Button>(R.id.btn_9).setOnClickListener { addNumber("9") }
+        
+        findViewById<Button>(R.id.btn_clear).setOnClickListener { 
+            currentNumber = ""
             firstNumber = ""
             operation = ""
             isNewNumber = true
-            
-        } catch (e: Exception) {
-            Toast.makeText(this, "خطأ في الحساب: ${e.message}", Toast.LENGTH_SHORT).show()
+            tvResult.text = "0"
         }
-    }
-    
-    private fun clear() {
-        currentNumber = ""
-        firstNumber = ""
-        operation = ""
-        isNewNumber = true
-        tvResult.text = "0"
-    }
-    
-    private fun addDecimal() {
-        try {
-            if (!currentNumber.contains(".")) {
-                currentNumber += if (currentNumber.isEmpty()) "0." else "."
-                tvResult.text = currentNumber
-                isNewNumber = false
+        
+        findViewById<Button>(R.id.btn_plus).setOnClickListener { 
+            if (currentNumber.isNotEmpty()) {
+                firstNumber = currentNumber
+                operation = "+"
+                isNewNumber = true
             }
-        } catch (e: Exception) {
-            Toast.makeText(this, "خطأ: ${e.message}", Toast.LENGTH_SHORT).show()
         }
+        
+        findViewById<Button>(R.id.btn_equal).setOnClickListener {
+            if (firstNumber.isNotEmpty() && currentNumber.isNotEmpty()) {
+                val first = firstNumber.toDouble()
+                val second = currentNumber.toDouble()
+                val result = when (operation) {
+                    "+" -> first + second
+                    else -> 0.0
+                }
+                tvResult.text = result.toString()
+                currentNumber = result.toString()
+                firstNumber = ""
+                operation = ""
+                isNewNumber = true
+            }
+        }
+    }
+    
+    private fun addNumber(num: String) {
+        if (isNewNumber) {
+            currentNumber = ""
+            isNewNumber = false
+        }
+        currentNumber += num
+        tvResult.text = currentNumber
     }
 }
