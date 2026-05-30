@@ -1,9 +1,6 @@
-name: Build Calculator APK
+name: Build APK
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push]
 
 jobs:
   build:
@@ -11,17 +8,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup JDK
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
-      
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+          java-version: '11'
       
       - name: Build APK
-        run: gradle assembleRelease --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
